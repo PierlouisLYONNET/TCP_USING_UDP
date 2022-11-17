@@ -13,6 +13,7 @@
 #define PORTSERV 6666
 #define MAXLINE 1024 // TODO CHANGING IT DO NOT WORK
 #define SIZE_HEADER 6
+#define WINDOW_SIZE 10
     
 int main() { 
 
@@ -82,28 +83,28 @@ int main() {
     tv.tv_sec  = 5;
     tv.tv_usec = 0;
     setsockopt(data_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
-    setsockopt(server_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+    // setsockopt(server_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
 
 
 
     /* --- Threeway Handshake --- */
 
-    /* Waiting ACK client */
+    // Waiting ACK client
     n = recvfrom(server_socket, (char *)buffer, MAXLINE,  MSG_WAITALL, (struct sockaddr *) &cliaddr, &len);
     buffer[n] = '\0'; 
     printf("Received from client : %s\n", buffer);
 
-    /* Send SYN ACK */
+    // Send SYN ACK
     sendto(server_socket, (const char *)syn_ack, strlen(syn_ack),  MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len); 
     printf("Send : syn_ack message.\n");  
 
-    /* Waiting Port client */
+    // Waiting Port client
     n = recvfrom(server_socket, (char *)buffer, MAXLINE,  MSG_WAITALL, (struct sockaddr *) &cliaddr, &len); 
     buffer[n] = '\0'; 
     printf("Received from client : %s\n", buffer);
 
-    /* Send Port */
+    // Send Port
     sendto(server_socket, (const char *)port, strlen(port),  MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len); 
     printf("Send : port adress.\n");  
 
@@ -120,19 +121,23 @@ int main() {
 
     char buffer_ftp[] = "ftp";
 
+
+
+    /* --- Number of sequence --- */
+
     int num_seq = 1;
+    int num_seq_last_ack = 0;
     char num_seq_char[SIZE_HEADER];
-
-    // TODO ACK
-    // TODO Tableau de tableau
-    // TODO JUSTE CE QU'IL FAUT
-
     char buffer_to_send[MAXLINE];
 
-    if(memcmp(buffer, buffer_ftp, 3)) { // TODO WIP
+
+
+    /* --- Waiting for ftp --- */
+
+    if(memcmp(buffer, buffer_ftp, 3)) { // TODO WIP "ftp"
 
         FILE* file_ptr;
-        file_ptr = fopen("Garen.jpg", "rb");
+        file_ptr = fopen("test.txt", "rb");
 
         if (NULL == file_ptr) {
             printf("File can't be opened \n");
@@ -140,50 +145,82 @@ int main() {
 
         char buffer_file[(MAXLINE - SIZE_HEADER)];
 
-        /* --- Sending file data socket --- */
         
-        while(!(feof(file_ptr))) { // Tant que le fichier n'est pas fini
 
-            // buffer_to_send[0] = '\0';
-            // buffer_file[0] = '\0';
-            // num_seq_char[0] = '\0';
+        /* --- Buffer TODO BIG of the file --- */
+
+        fseek(file_ptr, 0, SEEK_END);
+        long size = ftell(file_ptr);
+        fseek(file_ptr, 0, SEEK_SET);  // On revient au début
+
+        char *buffer_file_big = malloc(size + 1);
+        fread(buffer_file_big, size, 1, file_ptr);
+
+        buffer_file_big[size] = 0;
+
+        fclose(file_ptr);
+
+        
+
+        /* --- Sending file data socket --- */
+
+        int end_transmission = 1;
+        int current_index = 0;
+        int max_index = size/(MAXLINE - SIZE_HEADER);
+        printf("max index : %i",max_index);
+
+        while(end_transmission) {
 
             memset(buffer_to_send, 0, sizeof(buffer_to_send)); // TODO OPTIMIZE
-            memset(buffer_file, 0, sizeof(buffer_file));
-            // memset(num_seq_char, 0, sizeof(num_seq_char));
+            memset(num_seq_char, 0, sizeof(num_seq_char));
 
-            // TODO PK LE BUFFER MARCHE PAS SANS CLEAN ?
-
-            int n = fread(buffer_file, 1, sizeof(buffer_file), file_ptr);
-
-            printf("Size transmited : %i\n", n);
             
-            // sprintf(num_seq_char, "%i", num_seq); // integer to string
-            // sprintf(num_seq_char, "%06d%d", num_seq); // integer to string
             sprintf(num_seq_char, "%06d%d", num_seq); // integer to string
-            printf("num_seq_char %s, %i, %i\n", num_seq_char, sizeof(num_seq_char), num_seq);
-            // memcpy(num_seq_char, )
 
-            printf("%s\n", num_seq_char);
-            // strcat(buffer_to_send, num_seq_char);
-            // strcat(buffer_to_send, buffer_file);
             memcpy(buffer_to_send, num_seq_char, 6);
-            memcpy(buffer_to_send+6, buffer_file, n);
+
+            printf("current index : %i\n", current_index);
+
+            if(current_index == max_index){
+                memcpy(buffer_to_send + 6, buffer_file_big + (current_index * (MAXLINE - SIZE_HEADER)), size - ((current_index) * (MAXLINE - SIZE_HEADER)));
+            } else {
+                memcpy(buffer_to_send + 6, buffer_file_big + (current_index * (MAXLINE - SIZE_HEADER)), MAXLINE - SIZE_HEADER);
+            }
             
 
-            printf("\n\n\n----------Send----------\n\n");
-            sendto(data_socket, (char *)buffer_to_send, 
-                    (n + SIZE_HEADER), MSG_CONFIRM,
-                    (const struct sockaddr *) &cliaddr, len); 
-            //printf("buffer : \n%s\n\n\n", buffer_to_send);
+            printf("\n\nbuffer_to_send %s\n", buffer_to_send);
+            
+
+            printf("\n\n\n--------------Send-------------\n\n");
+            sendto(data_socket, (char *)buffer_to_send, strlen(buffer_to_send), MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len); 
+
 
             num_seq += 1;
+            current_index += 1;
 
+            if(current_index > max_index) {
+                end_transmission = 0;
+            }
+
+
+            /* --- Waiting ACK_seq client --- */
+            
             printf("\n\n\n----------Receive_ACK----------\n\n");
-            /* Waiting ACK_seq client */
             n = recvfrom(data_socket, (char *)buffer, MAXLINE,  MSG_WAITALL, (struct sockaddr *) &cliaddr, &len);
             buffer[n] = '\0'; 
             printf("Received from client : %s\n", buffer);
+
+            // Remove "ACK_" from buffer
+            memmove(buffer, buffer + 4, strlen(buffer));        
+            // printf("Received from client without ACK_ : %s\n", buffer);
+            num_seq_last_ack = atoi(buffer);
+            printf("num_seq_last_ack : %i\n", num_seq_last_ack);
+            printf("num_seq : %i\n", num_seq);
+
+            // TODO ACK
+            // TODO Tableau de tableau
+            // TODO JUSTE CE QU'IL FAUT
+
         }
 
         // TELL THE CLIENT TO STOP
@@ -203,15 +240,20 @@ int main() {
         strcat(buffer_to_send, buffer_file);
         
 
-        printf("\n\n\n----------Send----------\n\n");
+
+        /* --- Sending num_seq = 0 to client to end transmission --- */
+
+        printf("\n\n\n--------------Send-------------\n\n");
         sendto(data_socket, (char *)buffer_to_send, (n + SIZE_HEADER), MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len); 
         //printf("buffer : \n%s\n\n\n", buffer_to_send);
-
 
 
     } else {
         printf("nope\n");
     }
+
+
+    /* --- Closing the sockets --- */
 
     close(server_socket);
     close(data_socket);

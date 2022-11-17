@@ -46,20 +46,20 @@ int main()
 
     /* --- Threeway Handshake --- */
 
-    /* Send SYN */
+    // Send SYN
     sendto(server_socket, (const char *)syn, strlen(syn), MSG_CONFIRM, (const struct sockaddr *)&addr, sizeof(addr));
     printf("Send : syn message.\n");
 
-    /* Waiting SYN ACK */
+    // Waiting SYN ACK
     n = recvfrom(server_socket, (char *)buffer, MAXLINE, MSG_WAITALL, (struct sockaddr *)&addr, &len);
     buffer[n] = '\0';
     printf("Received from server : %s\n", buffer);
 
-    /* Send ACK */
+    // Send ACK
     sendto(server_socket, (const char *)ack, strlen(ack), MSG_CONFIRM, (const struct sockaddr *)&addr, sizeof(addr));
     printf("ack message sent.\n");
 
-    /* Waiting Server port */ // TODO SYNACK AVEC LE PORT
+    // Waiting Server port
     n = recvfrom(server_socket, (char *)buffer, MAXLINE, MSG_WAITALL, (struct sockaddr *)&addr, &len);
     buffer[n] = '\0';
     portserv = strtol(buffer, NULL, 10);
@@ -104,9 +104,11 @@ int main()
     int sequence_number_current = 0;
 
     FILE *file_ptr;
-    file_ptr = fopen("received.jpg", "wb");
+    file_ptr = fopen("received.txt", "wb");
 
     int end_transmission = 1;
+
+
 
     /* --- Timeout socket --- */
 
@@ -115,29 +117,23 @@ int main()
     tv.tv_usec = 0;
     setsockopt(data_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
+
+    /* --- Receive data on data_socket --- */
+
     while (end_transmission)
     {
 
-        // buffer_data[0] = '\0';
-        // buffer_sequence[0] = '\0';
-        // temp_buffer[0] = '\0';
-
-        // memset(buffer_data, 0, (MAXLINE - 1)); // TODO OPTIMIZE
-        // memset(buffer_sequence, 0, (SIZE_HEADER));
-        // memset(temp_buffer, 0, (MAXLINE - 1));
-
-        n = recvfrom(
-            data_socket, (char *)buffer_data, MAXLINE, MSG_WAITALL,
-             (struct sockaddr *)&addr, &len);
+        n = recvfrom(data_socket, (char *)buffer_data, MAXLINE, MSG_WAITALL, (struct sockaddr *)&addr, &len);
         buffer_data[n] = '\0';
 
-        printf("\n----- Received from server : -----\n\n%s\n", buffer_data);
+        printf("\n-----Received from server-----\n\n\n");       
         memcpy(buffer_writer, buffer_data + SIZE_HEADER, n);
-        // fwrite(buffer_writer, 1, (n - SIZE_HEADER), file_ptrr);
         
         printf("Size received : %i", n);
+        
 
-        /* Take the packets number */
+        /* --- Take the packets number --- */
+
         strcpy(temp_buffer, buffer_data);
         // Prevent the buffer to be taking all TODO better way
         buffer_sequence[SIZE_HEADER] = '\0';
@@ -163,22 +159,21 @@ int main()
         //     printf("\nSequence packets j:  %i\n", sequence_packets_received[j]);
         // }
 
-        /* ACK Seq */
+
+
+        /* --- Send ACK --- */
+
         char buffer_ack[(SIZE_HEADER + 4)];
         strcpy(buffer_ack, "ACK_");
         strcat(buffer_ack, buffer_sequence);
 
         printf("\nNum séquence: %s\n", buffer_ack);
-
         sendto(data_socket, (char *)buffer_ack, strlen(buffer_ack), MSG_CONFIRM, (const struct sockaddr *)&servaddr, sizeof(servaddr));
 
-        /* Remove the seq number */
-        // memmove(buffer_data, buffer_data + SIZE_HEADER, strlen(buffer_data));
-        // memcpy(buffer_writer, buffer_data + SIZE_HEADER, n - SIZE_HEADER);
-        //printf("\nBuffer sans num: %s\n\n", buffer_data);
 
 
-        printf("%i", sequence_number_current);
+        /* --- Writing or End of transmission --- */
+
         if(sequence_number_current != 0) {
             /* Create the file or reopen it */
             // TODO create file transmited by server (.jpg, .txt)
@@ -191,8 +186,10 @@ int main()
         
     }
 
-    fclose(file_ptr);
 
+    /* --- Closing file and socket --- */
+
+    fclose(file_ptr);
     printf("Is closed ?\n");
 
     close(server_socket);
