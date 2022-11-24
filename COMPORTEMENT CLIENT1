@@ -1,0 +1,9 @@
+-Numéro de séquence en double aléatoirement? (Réception double simulé ??) FREQUENCE DE 1/2 packets SAUF LE PREMIER PACKET
+ON dirait que c'est que des prints coté client, alors que notre serveur envoie 1 par 1 les packets DONC osef en somme
+Soluce : au doublon, on envoie un bit
+
+
+-Packet droppé aléatoirement (suivi de plusieurs ACK du packet précédent pour redemander le packet perdu);
+-Size des packets qui changent ??????????
+
+S'il drop le 2ème ACK double et bah c'est bon :D

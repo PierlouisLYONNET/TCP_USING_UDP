@@ -27,7 +27,6 @@ int main()
     int n, len, portserv;
 
 
-
     /* --- Create the socket --- */
 
     if ((server_socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
