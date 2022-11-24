@@ -82,7 +82,7 @@ int main() {
     /* --- Timeout socket --- */
 
     struct timeval tv;
-    tv.tv_sec  = 5;
+    tv.tv_sec  = 1.01;
     tv.tv_usec = 0;
     setsockopt(data_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
     // setsockopt(server_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
@@ -152,9 +152,9 @@ int main() {
     /* --- Buffer TODO BIG of the file --- */
 
     // Go to end of file to count number of bytes
-    fseek(file_ptr, 0, SEEK_END);
-    long size = ftell(file_ptr);
-    fseek(file_ptr, 0, SEEK_SET);  // Go back to beginning of file
+    fseek(file_ptr, 0L, SEEK_END);
+    int size = ftell(file_ptr);
+    rewind(file_ptr);
 
     // Allocate memory for entire content of file
     char *buffer_file_big = malloc(size + 1);
@@ -212,18 +212,24 @@ int main() {
 
             // If last index : send last N bytes remaining
             // Else : send 1018 bytes
-            if(current_index == max_index){
+            if(current_index == max_index) {
+
                 memcpy(buffer_to_send + 6, buffer_file_big + (current_index * (MAXLINE - SIZE_HEADER)), size - ((current_index) * (MAXLINE - SIZE_HEADER)));
+
+                printf("\nBuffer_to_send %s\n", buffer_to_send);
+            
+                printf("\n\n--------------Send-------------\n");
+                sendto(data_socket, (char *)buffer_to_send, size - ((current_index) * (MAXLINE - SIZE_HEADER)), MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len); 
+
             } else {
                 memcpy(buffer_to_send + 6, buffer_file_big + (current_index * (MAXLINE - SIZE_HEADER)), MAXLINE - SIZE_HEADER);
+
+                printf("\nBuffer_to_send %s\n", buffer_to_send);
+            
+                printf("\n\n--------------Send-------------\n");
+                sendto(data_socket, (char *)buffer_to_send, 1024, MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len); 
             }
             
-
-            printf("\nBuffer_to_send %s\n", buffer_to_send);
-            
-            printf("\n\n--------------Send-------------\n");
-            sendto(data_socket, (char *)buffer_to_send, strlen(buffer_to_send), MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len); 
-
             num_seq += 1;
             current_index += 1;
 
@@ -270,9 +276,6 @@ int main() {
 
         printf("num_seq_last_ack : %i\n", num_seq_last_ack);
         printf("num_seq : %i\n", num_seq);
-
-        // TODO ACK lost
-
     }
 
     // TELL THE CLIENT TO STOP
@@ -297,5 +300,6 @@ int main() {
     /* --- Closing the sockets --- */
     close(server_socket);
     close(data_socket);
+    free(buffer_file_big);
     return 0; 
 }
