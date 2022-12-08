@@ -1,10 +1,4 @@
-all: client serveur1-NRV serveur2-NRV serveur3-NRV
-
-client: client.o 
-	gcc client.o -o client
-
-client.o: client.c 
-	gcc client.c -c -o client.o
+all: serveur1-NRV serveur2-NRV serveur3-NRV
 
 serveur1-NRV: serveur1-NRV.o 
 	gcc serveur1-NRV.o -o serveur1-NRV
