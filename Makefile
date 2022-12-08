@@ -1,4 +1,4 @@
-all: client server
+all: client serveur1-NRV serveur2-NRV serveur3-NRV
 
 client: client.o 
 	gcc client.o -o client
@@ -6,11 +6,23 @@ client: client.o
 client.o: client.c 
 	gcc client.c -c -o client.o
 
-server: server.o 
-	gcc server.o -o server
+serveur1-NRV: serveur1-NRV.o 
+	gcc serveur1-NRV.o -o serveur1-NRV
 
-server.o: server.c 
-	gcc server.c -c -o server.o
+serveur1-NRV.o: serveur1-NRV.c 
+	gcc serveur1-NRV.c -c -o serveur1-NRV.o
+
+serveur2-NRV: serveur2-NRV.o 
+	gcc serveur2-NRV.o -o serveur2-NRV
+
+serveur2-NRV.o: serveur2-NRV.c 
+	gcc serveur2-NRV.c -c -o serveur2-NRV.o
+
+serveur3-NRV: serveur3-NRV.o 
+	gcc serveur3-NRV.o -o serveur3-NRV
+
+serveur3-NRV.o: serveur3-NRV.c 
+	gcc serveur3-NRV.c -c -o serveur3-NRV.o
 	
 clean:
-	rm -f client server *.o
+	rm -f client serveur1-NRV serveur2-NRV serveur3NRV *.o
