@@ -8,11 +8,17 @@
 #include <netinet/in.h>
 
     
-#define PORT_PUBLIC 8080 
 #define SIZE_PACKET 1500 // MAX 1500 => MTU
 #define SIZE_HEADER 6
     
-int main() { 
+int main(int argc, char* argv[]) { 
+
+    if(argc != 2) {
+        printf("Usage : ./serveur1-NRV <PORT>\n");
+        exit(1);
+    }
+
+    int PORT_PUBLIC = atoi(argv[1]);
 
     // Modèle d'en tête de nos packets :
     // 6 premiers caractères : NUM SEQ
