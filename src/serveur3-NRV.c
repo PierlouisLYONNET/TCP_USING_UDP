@@ -122,10 +122,9 @@ int main(int argc, char* argv[]) {
             /* --- Timeout socket --- */
 
             struct timeval tv;
-            tv.tv_sec  = 1.000001;  // TODO ??????????? depending RTT
+            tv.tv_sec  = 1.000001;  // TODO depending RTT
             tv.tv_usec = 0;
             setsockopt(data_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
-            // setsockopt(server_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
             /* ----------------------------------------------------- Data exchange ----------------------------------------------------- */
 
@@ -221,8 +220,6 @@ int main(int argc, char* argv[]) {
 
                     memcpy(buffer_to_send, num_seq_char, 6);
 
-                    //printf("\nCurrent index : %i\n", current_index);
-                    // printf("\nNum seq : %i\n", seq_num);
 
                     // If last index : send last N bytes remaining
                     // Else : send SIZE_PACKET bytes
@@ -257,12 +254,7 @@ int main(int argc, char* argv[]) {
 
                         count_packet += 1;
                     }
-                    
-                    
-                    // // If last index : end transmission
-                    // if(current_index > max_index) {
-                    //     end_transmission = 0;
-                    // }
+                               
                     
                 }
 
@@ -300,10 +292,6 @@ int main(int argc, char* argv[]) {
                                 window_end = window_size;
                             }
                             higher_seq_num_received = seq_received;
-
-                            // printf("Sequence rec : %i\n",seq_received); // Update window to the last ACK received
-                            // printf("Window end : %i\n", window_end);
-
 
                         } else {
 
@@ -365,11 +353,6 @@ int main(int argc, char* argv[]) {
                                             }
                                         }
 
-                                        // printf("window end : %i\n", window_end);
-                                        // printf("higher seq num received : %i\n", higher_seq_num_received);
-                                        // printf("seq received : %i\n", seq_received);
-                                        // printf("window_size : %i\n", window_size);
-
                                         window_start = 0;
                                         window_end = window_size;
 
@@ -382,9 +365,11 @@ int main(int argc, char* argv[]) {
                         printf("++++++++++++++ Nothing received ERROR ++++++++++++++++\n");
                         seq_num = seq_received + 1;
                         current_index = seq_received;
+
                         window_start = 0;
                         window_size = window_size - 1;
                         window_end = window_size;
+
                         if(window_size < 6) {
                             window_size = 6;
                         }
@@ -410,14 +395,7 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            // TELL THE CLIENT TO STOP
-            // buffer_to_send[0] = '\0';
-            // buffer_data_packet[0] = '\0';
-            // num_seq_char[0] = '\0';
-
             memset(buffer_to_send, 0, (SIZE_PACKET - 1));
-            // memset(buffer_data_packet, 0, (SIZE_PACKET - SIZE_HEADER - 1));
-            // memset(num_seq_char, 0, SIZE_HEADER);
 
             strcat(buffer_to_send, "FIN");
 
@@ -427,9 +405,6 @@ int main(int argc, char* argv[]) {
             for(int i = 0; i < 3; i++) {
                 sendto(data_socket, (char *)buffer_to_send, 3, MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len);
             }
-
-
-            //printf("buffer : \n%s\n\n\n", buffer_to_send);
 
             printf("\n/* -------- End sending data ------- */\n\n");
 
