@@ -14,6 +14,8 @@
     
 int main(int argc, char* argv[]) { 
 
+    // TODO Not fast recovery but entiere window
+
     if(argc != 2) {
         printf("Usage : ./serveur1-NRV <PORT>\n");
         exit(1);
