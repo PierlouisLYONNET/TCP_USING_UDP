@@ -14,7 +14,7 @@
 int main(int argc, char* argv[]) { 
 
     if(argc != 2) {
-        printf("Usage : ./serveur1-NRV <PORT>\n");
+        printf("Usage : ./serveur3-NRV <PORT>\n");
         exit(1);
     }
 
