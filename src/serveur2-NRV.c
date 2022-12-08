@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
     /* --- Timeout socket --- */
 
     struct timeval tv;
-    tv.tv_sec  = 1.000001;  // TODO ??????????? depending RTT
+    tv.tv_sec  = 1.000001;  // TODO depending RTT
     tv.tv_usec = 0;
     setsockopt(data_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
     // setsockopt(server_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
@@ -296,87 +296,19 @@ int main(int argc, char* argv[]) {
 
                 } else {
 
-                    // If we are way too fast for the client, we go back to a certain sequence number
-                    if((higher_seq_num_received + seq_limit) < seq_num) {
-                        printf("-> --------------- Too fast for the client ----------------------\n");
-                        seq_num = seq_received + 1;
-                        current_index = seq_received;
-                        window_start = 0;
-                        window_size = window_size - 1;
-                        window_end = window_size;
-                        if(window_size < 6) {
-                            window_size = 6;
-                        }
-                    } else {
+                    // Client 2 has a loss of connection, so we go back
 
-                        if(seq_received == higher_seq_num_received) {
-
-                            printf("-> ACK lost detected\n");
-                            // window_end += 1;
-                            count += 1;
-
-                            if(count == 3) {
-
-                                printf("+++ 3 ACK LOST +++\n");
-                                printf("-> Fast retransmit\n");
-                                
-                                /* --- Fast retransmit --- */
-
-                                // Empty buffer
-                                memset(buffer_to_send, 0, sizeof(buffer_to_send)); // TODO OPTIMIZE
-                                memset(num_seq_char, 0, sizeof(num_seq_char));
-                                    
-                                sprintf(num_seq_char, "%06d%d", (higher_seq_num_received + 1)); // integer to string
-
-                                memcpy(buffer_to_send, num_seq_char, 6);
-
-                                printf("\nSeq lost : %i\n", higher_seq_num_received);
-
-                                // If last index : send last N bytes remaining
-                                // Else : send PACKET_SIZE bytes
-                                if(higher_seq_num_received == max_index) {
-
-                                    memcpy(buffer_to_send + 6, buffer_file_big + (higher_seq_num_received * (SIZE_PACKET - SIZE_HEADER)), size - ((higher_seq_num_received) * (SIZE_PACKET - SIZE_HEADER)));
-
-                                    //printf("\nBuffer_to_send %s\n", buffer_to_send);
-                                
-                                    printf("-------------->> Send\n\n");
-                                    sendto(data_socket, (char *)buffer_to_send, size - ((higher_seq_num_received) * (SIZE_PACKET - SIZE_HEADER)) + SIZE_HEADER, MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len); 
-
-                                } else {
-                                    if(higher_seq_num_received < max_index) { // To prevent the for to send data not existing
-                                        memcpy(buffer_to_send + 6, buffer_file_big + (higher_seq_num_received * (SIZE_PACKET - SIZE_HEADER)), SIZE_PACKET - SIZE_HEADER);
-
-                                        //printf("\nBuffer_to_send %s\n", buffer_to_send);
-                                    
-                                        printf("-------------->> Send\n\n");
-                                        sendto(data_socket, (char *)buffer_to_send, SIZE_PACKET, MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len);
-                                    }
-                                }
-
-                                // printf("window end : %i\n", window_end);
-                                // printf("higher seq num received : %i\n", higher_seq_num_received);
-                                // printf("seq received : %i\n", seq_received);
-                                // printf("window_size : %i\n", window_size);
-
-                                window_start = 0;
-                                window_end = window_size;
-
-                                count = 0;
-                            }
-                        }
-                    }
+                    seq_num = higher_seq_num_received + 1;
+                    current_index = higher_seq_num_received;
+                    window_start = 0;
+                    window_end = window_size;
                 }
             } else {
                 printf("++++++++++++++ Nothing received ERROR ++++++++++++++++\n");
-                seq_num = seq_received + 1;
-                current_index = seq_received;
+                seq_num = higher_seq_num_received + 1;
+                current_index = higher_seq_num_received;
                 window_start = 0;
-                window_size = window_size - 1;
                 window_end = window_size;
-                if(window_size < 6) {
-                    window_size = 6;
-                }
             }
 
                 // printf("Received from client without ACK : %s\n", buffer);

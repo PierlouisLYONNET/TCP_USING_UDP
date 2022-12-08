@@ -74,8 +74,6 @@ int main(int argc, char* argv[]) {
 
         memcpy(syn_ack + 7, PORT_DATA_string, 4);
 
-        
-        
         PORT_DATA += 1;
 
         /* --- Threeway Handshake --- */
@@ -109,7 +107,7 @@ int main(int argc, char* argv[]) {
             // Because the father made +1 to PORT_DATA
             PORT_DATA -=1;
 
-            printf("PORT_DATA USED : %d", PORT_DATA);
+            printf("PORT_DATA USED : %d\n", PORT_DATA);
 
             exchangeaddr.sin_family = AF_INET;
             exchangeaddr.sin_addr.s_addr = INADDR_ANY;
