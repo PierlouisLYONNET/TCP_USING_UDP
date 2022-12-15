@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
     /* --- Timeout socket --- */
 
     struct timeval tv;
-    tv.tv_usec = 100000;
+    tv.tv_usec = 300000;
     setsockopt(data_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
     // setsockopt(server_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
